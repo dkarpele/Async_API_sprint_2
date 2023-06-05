@@ -1,9 +1,22 @@
-# Проектная работа 5 спринта
+# Service Async API
 
-В папке **tasks** ваша команда найдёт задачи, которые необходимо выполнить во втором спринте модуля "Сервис Async API".
+## Project structure:
 
-Как и в прошлом спринте, мы оценили задачи в стори поинтах.
+* es_index - contains dumps of ES indexes `movies`, `genres`, `persons`. Indexes upload to es container after launching the project.   
+* API service - uses FastApi Async framework to provide API for external services. It loads data from ElasticSearch or cached data from Redis. 
 
-Вы можете разбить эти задачи на более маленькие, например, распределять между участниками команды не большие куски задания, а маленькие подзадачи. В таком случае не забудьте зафиксировать изменения в issues в репозитории.
 
-**От каждого разработчика ожидается выполнение минимум 40% от общего числа стори поинтов в спринте.**
+## Documentation
+
+[OpenAPI](http://localhost/api/openapi) documentation is available after creating the service.
+
+
+## Installation
+
+1. Clone [repo](https://github.com/dkarpele/Async_API_sprint_1).
+2. Create ```.env``` file according to ```.env.example```.
+3. Launch the project ```docker-compose up```.
+
+## Authors
+* Lubov Sovina [@lubovSovina](https://github.com/lubovSovina)
+* Denis Karpelevich [@dkarpele](https://github.com/dkarpele)
