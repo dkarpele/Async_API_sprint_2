@@ -146,7 +146,7 @@ async def film_list(pagination: Paginate,
                 "query": {
                     "bool": {
                         "must":
-                            {"match": {"genre.id": genre}}
+                            {"match": {"genre.name": genre}}
                     }
                 }
             }
