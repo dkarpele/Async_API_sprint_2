@@ -16,7 +16,7 @@ from db import elastic, redis
 async def startup():
     redis.redis = Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT,
                         ssl=False)
-    elastic.es = AsyncElasticsearch(
+    elastic.es = elastic.Elastic(
         hosts=[f'{settings.ELASTIC_HOST}:{settings.ELASTIC_PORT}'])
 
 

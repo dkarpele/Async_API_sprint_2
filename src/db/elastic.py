@@ -1,8 +1,61 @@
-from elasticsearch import AsyncElasticsearch
+from typing import Optional
+from elasticsearch import AsyncElasticsearch, NotFoundError
 
-es: AsyncElasticsearch | None = None
+ES_MAX_SIZE = 50
 
 
-# Функция понадобится при внедрении зависимостей
-async def get_elastic() -> AsyncElasticsearch:
+class Elastic(AsyncElasticsearch):
+    # Функция понадобится при внедрении зависимостей
+    async def get_by_id(self, _id: str, index: str, model) -> Optional:
+        try:
+            doc = await self.get(index=index, id=_id)
+        except NotFoundError:
+            return None
+        return model(**doc['_source'])
+
+    async def get_list(self, model,
+                       index: str,
+                       sort: str = None,
+                       search: dict = None,
+                       page: int = None,
+                       size: int = None) -> Optional:
+        if sort:
+            try:
+                order = 'desc' if sort.startswith('-') else 'asc'
+                sort = sort[1:] if sort.startswith('-') else sort
+                sorting = [{sort: {'order': order}}]
+            except AttributeError:
+                sorting = None
+        else:
+            sorting = None
+
+        if page and size:
+            offset = (page * size) - size
+        elif page and not size:
+            size = ES_MAX_SIZE
+            offset = (page * size) - size
+        elif not page and size:
+            offset = None
+        else:
+            offset = None
+            size = ES_MAX_SIZE
+
+        try:
+            docs = await self.search(
+                index=index,
+                query=search,
+                size=size,
+                sort=sorting,
+                from_=offset
+            )
+        except NotFoundError:
+            return None
+
+        return [model(**doc['_source']) for doc in docs['hits']['hits']]
+
+
+es: Elastic | None = None
+
+
+async def get_elastic() -> Elastic:
     return es
