@@ -143,3 +143,59 @@ class TestFilms:
             assert response.status == expected_answer['status']
             assert body['detail'][0]['type'] == expected_answer['type']
             assert expected_answer['msg'] in body['detail'][0]['msg']
+
+        expected_answer = {'status': 422,
+                           'type0': 'value_error.number.not_ge',
+                           'type1': 'value_error.number.not_le'}
+        url = settings.service_url\
+            + '/api/v1/films/?page_number=-4&page_size=5000000000'
+
+        async with session_client.get(url) as response:
+            body = await response.json()
+            assert response.status == expected_answer['status']
+            assert body['detail'][0]['type'] == expected_answer['type0']
+            assert body['detail'][1]['type'] == expected_answer['type1']
+
+        expected_answer = {'status': 422,
+                           'type0': 'type_error.integer',
+                           'type1': 'type_error.integer'}
+        url = settings.service_url\
+            + '/api/v1/films/?page_number=fff&page_size=pop'
+
+        async with session_client.get(url) as response:
+            body = await response.json()
+            assert response.status == expected_answer['status']
+            assert body['detail'][0]['type'] == expected_answer['type0']
+            assert body['detail'][1]['type'] == expected_answer['type1']
+
+    # Test works ONLY ones because of
+    # https://github.com/dkarpele/Async_API_sprint_2/issues/12
+    # To make it work again need to remove redis index.
+    @pytest.mark.asyncio
+    async def test_get_all_films_sort(self,
+                                      es_write_data,
+                                      session_client):
+        expected_answer = {'status': 200,
+                           'length': 50,
+                           'title': 'The Star'}
+        url = settings.service_url + '/api/v1/films/?sort=imdb_rating'
+
+        async with session_client.get(url) as response:
+            body = await response.json()
+            assert response.status == expected_answer['status']
+            imdb_rating_list = [i['imdb_rating'] for i in body]
+            assert sorted(imdb_rating_list) == imdb_rating_list
+            assert imdb_rating_list[0] < imdb_rating_list[len(imdb_rating_list)-1]
+
+        expected_answer = {'status': 200,
+                           'length': 50,
+                           'title': 'The Star'}
+        url = settings.service_url + '/api/v1/films/?sort=-imdb_rating'
+
+        async with session_client.get(url) as response:
+            body = await response.json()
+            assert response.status == expected_answer['status']
+            imdb_rating_list = [i['imdb_rating'] for i in body]
+            assert sorted(imdb_rating_list, reverse=True) == imdb_rating_list
+            assert imdb_rating_list[0] > imdb_rating_list[
+                len(imdb_rating_list) - 1]

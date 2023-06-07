@@ -1,8 +1,9 @@
 import uuid
+import random
 
 movies = [{
     'id': str(uuid.uuid4()),
-    'imdb_rating': 8.5,
+    'imdb_rating': round(random.random() * 10, 1),
     'genre': [
         {'id': '789', 'name': 'Action'},
         {'id': '546', 'name': 'Music Story'}
