@@ -1,6 +1,6 @@
 from typing import Optional
 
-from elasticsearch import AsyncElasticsearch, NotFoundError
+from elasticsearch import AsyncElasticsearch, NotFoundError, RequestError
 from redis.asyncio import Redis
 
 CACHE_EXPIRE_IN_SECONDS = 60 * 5  # 5 минут
