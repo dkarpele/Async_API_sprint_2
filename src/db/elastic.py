@@ -1,14 +1,18 @@
 from typing import Optional
 from elasticsearch import AsyncElasticsearch, NotFoundError
 
+from db import AbstractStorage
+
 ES_MAX_SIZE = 50
 
 
-class Elastic(AsyncElasticsearch):
-    # Функция понадобится при внедрении зависимостей
+class Elastic(AbstractStorage):
+    def __init__(self, **params):
+        self.session = AsyncElasticsearch(**params)
+
     async def get_by_id(self, _id: str, index: str, model) -> Optional:
         try:
-            doc = await self.get(index=index, id=_id)
+            doc = await self.session.get(index=index, id=_id)
         except NotFoundError:
             return None
         return model(**doc['_source'])
@@ -41,7 +45,7 @@ class Elastic(AsyncElasticsearch):
             size = ES_MAX_SIZE
 
         try:
-            docs = await self.search(
+            docs = await self.session.search(
                 index=index,
                 query=search,
                 size=size,
@@ -57,5 +61,6 @@ class Elastic(AsyncElasticsearch):
 es: Elastic | None = None
 
 
+# Функция понадобится при внедрении зависимостей
 async def get_elastic() -> Elastic:
     return es

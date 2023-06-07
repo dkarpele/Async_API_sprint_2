@@ -2,21 +2,21 @@ from typing import Optional
 
 from redis.asyncio import Redis
 
-from src.db.elastic import Elastic
+from db import AbstractStorage
 
 CACHE_EXPIRE_IN_SECONDS = 60 * 5  # 5 минут
 
 
 class IdRequestService:
-    def __init__(self, redis: Redis, elastic: Elastic, model):
+    def __init__(self, redis: Redis, storage: AbstractStorage, model):
         self.redis = redis
-        self.elastic = elastic
+        self.storage = storage
         self.model = model
 
     async def get_by_id(self, _id: str, index: str) -> Optional:
         entity = await self._get_from_cache(_id)
         if not entity:
-            entity = await self.elastic.get_by_id(_id, index, self.model)
+            entity = await self.storage.get_by_id(_id, index, self.model)
             if not entity:
                 return None
             await self._put_to_cache(entity)
@@ -36,9 +36,9 @@ class IdRequestService:
 
 
 class ListService:
-    def __init__(self, redis: Redis, elastic: Elastic, model):
+    def __init__(self, redis: Redis, storage: AbstractStorage, model):
         self.redis = redis
-        self.elastic = elastic
+        self.storage = storage
         self.model = model
 
     async def get_list(self,
@@ -54,7 +54,7 @@ class ListService:
         else:
             entities = None
         if not entities:
-            entities = await self.elastic.get_list(self.model,
+            entities = await self.storage.get_list(self.model,
                                                    index,
                                                    sort,
                                                    search,
