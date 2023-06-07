@@ -108,7 +108,7 @@ class ListService:
                 sort=sorting,
                 from_=offset
             )
-        except NotFoundError:
+        except (NotFoundError, RequestError):
             return None
 
         return [self.model(**doc['_source']) for doc in docs['hits']['hits']]
