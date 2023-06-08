@@ -10,19 +10,20 @@ class Elastic(AbstractStorage):
     def __init__(self, **params):
         self.session = AsyncElasticsearch(**params)
 
-    async def get_by_id(self, _id: str, index: str, model) -> Optional:
+    async def get_by_id(self, _id: str, index: str, model) -> dict | None:
         try:
             doc = await self.session.get(index=index, id=_id)
         except NotFoundError:
             return None
         return model(**doc['_source'])
 
-    async def get_list(self, model,
+    async def get_list(self,
+                       model,
                        index: str,
                        sort: str = None,
                        search: dict = None,
                        page: int = None,
-                       size: int = None) -> Optional:
+                       size: int = None) -> list | None:
         if sort:
             try:
                 order = 'desc' if sort.startswith('-') else 'asc'
