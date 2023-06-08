@@ -57,3 +57,12 @@ async def es_write_data(es_client):
     for index in settings.es_indexes.split():
         await es_client.indices.flush(index=index)
         await es_client.indices.delete(index=index)
+
+
+@pytest_asyncio.fixture
+async def get_film_id(es_write_data, session_client):
+    url = settings.service_url + '/api/v1/films/?page_size=1'
+
+    async with session_client.get(url) as response:
+        body = await response.json()
+        yield body[0]['uuid']
