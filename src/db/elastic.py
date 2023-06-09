@@ -1,5 +1,5 @@
 from typing import Optional
-from elasticsearch import AsyncElasticsearch, NotFoundError
+from elasticsearch import AsyncElasticsearch, NotFoundError, RequestError
 
 from db import AbstractStorage
 
@@ -53,7 +53,7 @@ class Elastic(AbstractStorage):
                 sort=sorting,
                 from_=offset
             )
-        except NotFoundError:
+        except (NotFoundError, RequestError):
             return None
 
         return [model(**doc['_source']) for doc in docs['hits']['hits']]
