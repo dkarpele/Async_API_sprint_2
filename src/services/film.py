@@ -5,7 +5,7 @@ from elasticsearch import AsyncElasticsearch, NotFoundError
 from fastapi import Depends
 from redis.asyncio import Redis
 
-from db.elastic import get_elastic
+from db.elastic import get_elastic, Elastic
 from db.redis import get_redis
 from models.films import Film
 from services.service import IdRequestService, ListService
@@ -19,12 +19,12 @@ from services.service import IdRequestService, ListService
 @lru_cache()
 def get_film_service(
         redis: Redis = Depends(get_redis),
-        elastic: AsyncElasticsearch = Depends(get_elastic)) -> IdRequestService:
+        elastic: Elastic = Depends(get_elastic)) -> IdRequestService:
     return IdRequestService(redis, elastic, Film)
 
 
 @lru_cache()
 def get_film_list_service(
         redis: Redis = Depends(get_redis),
-        elastic: AsyncElasticsearch = Depends(get_elastic)) -> ListService:
+        elastic: Elastic = Depends(get_elastic)) -> ListService:
     return ListService(redis, elastic, Film)
