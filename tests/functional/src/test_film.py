@@ -1,11 +1,19 @@
+import logging
+
 import pytest
+from logging import config as logging_config
 
 from tests.functional.settings import settings
+from tests.functional.utils.logger import LOGGING
+
+# Применяем настройки логирования
+logging_config.dictConfig(LOGGING)
 
 PREFIX = '/api/v1/films'
 
 
-@pytest.mark.usefixtures('es_write_data')
+@pytest.mark.usefixtures('redis_clear_data_before_after',
+                         'es_write_data')
 class TestFilms:
     @pytest.mark.parametrize(
         'url, expected_answer',
@@ -130,11 +138,9 @@ class TestFilms:
             except (KeyError, IndexError):
                 pass
 
-    # Test works ONLY ONES because of
-    # https://github.com/dkarpele/Async_API_sprint_2/issues/12
-    # To make it work again need to remove redis index.
-    # $ docker exec -ti redis bash
-    # root@c8e62cb99f32:/data# redis-cli FLUSHALL
+    # There is a bug https://github.com/dkarpele/Async_API_sprint_2/issues/12
+    # Test below works only because redis DB clears after each run with the
+    # help of fixture `redis_clear_data_before_after`
     @pytest.mark.parametrize(
         'url, expected_answer, reverse',
         [
@@ -161,7 +167,7 @@ class TestFilms:
             (
                 f'{PREFIX}/search?query=doesntexist&sort=imdb_rating',
                 {'status': 404},
-                True
+                False
             )
         ]
     )
@@ -189,14 +195,8 @@ class TestFilms:
                     assert imdb_rating_list[0] > \
                         imdb_rating_list[len(imdb_rating_list) - 1]
 
-        # TODO: This is w/a. Need to remove after fix of #12. See comment above
-        import redis
-        redis_cli = redis.Redis(host=settings.redis_host,
-                                port=settings.redis_port)
-        redis_cli.flushall()
 
-
-@pytest.mark.usefixtures('es_write_data')
+@pytest.mark.usefixtures('redis_clear_data_before_after', 'es_write_data')
 class TestFilmID:
     @pytest.mark.asyncio
     async def test_get_film_by_id(self,
@@ -228,7 +228,7 @@ class TestFilmID:
             assert body['detail'] == "BAD_ID not found in movies"
 
 
-@pytest.mark.usefixtures('es_write_data')
+@pytest.mark.usefixtures('redis_clear_data_before_after', 'es_write_data')
 class TestFilmSearch:
     @pytest.mark.parametrize(
         'url, expected_answer',
@@ -285,3 +285,204 @@ class TestFilmSearch:
                 assert body[0]['title'] == expected_answer['title']
                 assert list(body[0].keys()) == ['uuid', 'title', 'imdb_rating']
                 assert type(body[0]['imdb_rating']) == float
+
+
+class TestFilmsRedis:
+    """
+    The idea behind the Test class is:
+    1. Run method `prepare`, that will load data to ES:
+        1. Run HTTP request that will load data to redis
+        2. Remove all data from ES
+    2. Run method `get_from_redis`:
+        1. Run HTTP request that will try to get data from redis
+        2. Show the output
+        3. Upload the data to redis
+    """
+
+    params_list = \
+        [
+            (
+                f'{PREFIX}/?genre=Action',
+                {'status': 200, 'length': 50, 'title': 'The Star'}
+            ),
+            (
+                f'{PREFIX}/?page_number=4&page_size=5&genre=Action',
+                {'status': 200, 'length': 5, 'title': 'The Star'}
+            ),
+            (
+                f'{PREFIX}/search?query=Star',
+                {'status': 200, 'length': 50, 'title': 'The Star'}
+            ),
+            (
+                f'{PREFIX}/search?query=The Star',
+                {'status': 200, 'length': 50, 'title': 'The Star'}
+            ),
+            (
+                f'{PREFIX}/search?query=Star&page_number=4&page_size=5',
+                {'status': 200, 'length': 5, 'title': 'The Star'}
+            ),
+            (
+                f'{PREFIX}/search?query=Star&page_number=4&page_size=10',
+                {'status': 200, 'length': 10, 'title': 'The Star'}
+            ),
+        ]
+
+    # This test only adds data to ES, adds data to redis, removes data from ES
+    @pytest.mark.parametrize(
+        'url, expected_answer',
+        params_list
+    )
+    @pytest.mark.asyncio
+    async def test_prepare_data(self,
+                                es_write_data,
+                                session_client,
+                                url,
+                                expected_answer):
+        url = settings.service_url + url
+
+        async with session_client.get(url) as response:
+            assert response.status == 200
+
+    # This test DOESN'T add data to ES, but adds data to redis
+    @pytest.mark.parametrize(
+        'url, expected_answer',
+        params_list
+    )
+    @pytest.mark.asyncio
+    async def test_get_from_redis(self,
+                                  session_client,
+                                  url,
+                                  expected_answer):
+        url = settings.service_url + url
+        async with session_client.get(url) as response:
+            body = await response.json()
+            assert response.status == expected_answer['status']
+            assert len(body) == expected_answer['length']
+            assert body[0]['title'] == expected_answer['title']
+            assert list(body[0].keys()) == ['uuid', 'title', 'imdb_rating']
+            assert type(body[0]['imdb_rating']) == float
+
+
+class TestFilmsSortRedis:
+    """
+    The idea behind the Test class is:
+    1. Run method `prepare`, that will load data to ES:
+        1. Run HTTP request that will load data to redis
+        2. Remove all data from ES
+    2. Run method `get_from_redis`:
+        1. Run HTTP request that will try to get data from redis
+        2. Show the output
+        3. Upload the data to redis
+    """
+
+    params_list = \
+        [
+            (
+                f'{PREFIX}/search?query=Star&sort=imdb_rating',
+                {'status': 200, 'length': 50, 'title': 'The Star'},
+                False
+            ),
+            (
+                f'{PREFIX}/search?query=Star&sort=-imdb_rating',
+                {'status': 200, 'length': 50, 'title': 'The Star'},
+                True
+            ),
+        ]
+
+    # This test only adds data to ES, adds data to redis, removes data from ES
+    @pytest.mark.parametrize(
+        'url, expected_answer, reverse',
+        params_list
+    )
+    @pytest.mark.asyncio
+    async def test_prepare_data(self,
+                                es_write_data,
+                                session_client,
+                                url,
+                                expected_answer,
+                                reverse):
+        url = settings.service_url + url
+
+        async with session_client.get(url) as response:
+            assert response.status == 200
+
+    # This test DOESN'T work because of #12, marking as xfail
+    @pytest.mark.parametrize(
+        'url, expected_answer, reverse',
+        params_list
+    )
+    @pytest.mark.asyncio
+    @pytest.mark.xfail
+    async def test_get_from_redis(self,
+                                  session_client,
+                                  url,
+                                  expected_answer,
+                                  reverse):
+        url = settings.service_url + url
+
+        async with session_client.get(url) as response:
+            body = await response.json()
+            assert response.status == expected_answer['status']
+            imdb_rating_list = [i['imdb_rating'] for i in body]
+            assert sorted(imdb_rating_list, reverse=reverse) == \
+                imdb_rating_list
+            if not reverse:
+                assert imdb_rating_list[0] < \
+                    imdb_rating_list[len(imdb_rating_list) - 1]
+            else:
+                assert imdb_rating_list[0] > \
+                    imdb_rating_list[len(imdb_rating_list) - 1]
+
+
+class TestFilmIdRedis:
+    """
+    The idea behind the Test class is:
+    1. Run method `prepare`, that will load data to ES:
+        1. Run HTTP request that will load data to redis
+        2. Remove all data from ES
+    2. Run method `get_from_redis`:
+        1. Run HTTP request that will try to get data from redis
+        2. Show the output
+        3. Upload the data to redis
+    """
+
+    # This test only adds data to ES, adds data to redis, removes data from ES
+    @pytest.mark.asyncio
+    async def test_prepare_data(self,
+                                es_write_data,
+                                session_client):
+        # Collect film uuid
+        global _id
+        url = settings.service_url + '/api/v1/films/?page_size=1'
+        async with session_client.get(url) as response:
+            body = await response.json()
+            assert response.status == 200
+            _id = body[0]['uuid']
+
+        # Find data by id
+        url = settings.service_url + PREFIX + '/' + _id
+        async with session_client.get(url) as response:
+            assert response.status == 200
+
+    # This test DOESN'T add data to ES, but adds data to redis
+    @pytest.mark.asyncio
+    async def test_get_from_redis(self,
+                                  redis_clear_data_after,
+                                  session_client):
+
+        expected_answer = {'status': 200, 'length': 8, 'title': 'The Star'}
+        try:
+            url = settings.service_url + PREFIX + '/' + _id
+        except NameError:
+            logging.error("Can't run the test /films/UUID with unknown id")
+            assert False
+
+        async with session_client.get(url) as response:
+            body = await response.json()
+            assert response.status == expected_answer['status']
+            assert body['title'] == expected_answer['title']
+            assert len(body) == expected_answer['length']
+            assert body['uuid'] == _id
+            assert list(body.keys()) == ['uuid', 'title', 'imdb_rating',
+                                         'description', 'genre', 'actors',
+                                         'writers', 'directors']
