@@ -1,3 +1,4 @@
+import json
 from typing import Optional
 
 from redis.asyncio import Redis
@@ -50,7 +51,7 @@ class ListService:
                        size: int = None) -> Optional:
 
         if key:
-            entities = await self._get_from_cache(key)
+            entities = await self._get_from_cache(key, sort)
         else:
             entities = None
         if not entities:
@@ -67,13 +68,18 @@ class ListService:
 
         return entities
 
-    async def _get_from_cache(self, name: str = None) -> Optional:
+    async def _get_from_cache(self, name: str = None, sort: str = None) -> Optional:
         data = await self.redis.hgetall(name)
         if not data:
             return None
 
-        res = [self.model.parse_raw(i) for i in data.values()]
-        return res
+        res = data.values()
+        if sort:
+            if sort[0] == '-':
+                res = sorted(res, key=lambda x: json.loads(x)[sort[1:]], reverse=True)
+            else:
+                res = sorted(res, key=lambda x: json.loads(x)[sort])
+        return [self.model.parse_raw(i) for i in res]
 
     async def _put_to_cache(self, key: str, entities: list):
         entities_dict: dict = \
