@@ -334,6 +334,7 @@ class TestFilmsRedis:
     )
     @pytest.mark.asyncio
     async def test_prepare_data(self,
+                                redis_clear_data_before,
                                 es_write_data,
                                 session_client,
                                 url,
@@ -350,6 +351,7 @@ class TestFilmsRedis:
     )
     @pytest.mark.asyncio
     async def test_get_from_redis(self,
+                                  redis_clear_data_after,
                                   session_client,
                                   url,
                                   expected_answer):
@@ -396,6 +398,7 @@ class TestFilmsSortRedis:
     )
     @pytest.mark.asyncio
     async def test_prepare_data(self,
+                                redis_clear_data_before,
                                 es_write_data,
                                 session_client,
                                 url,
@@ -414,6 +417,7 @@ class TestFilmsSortRedis:
     @pytest.mark.asyncio
     @pytest.mark.xfail
     async def test_get_from_redis(self,
+                                  redis_clear_data_after,
                                   session_client,
                                   url,
                                   expected_answer,
@@ -449,6 +453,7 @@ class TestFilmIdRedis:
     # This test only adds data to ES, adds data to redis, removes data from ES
     @pytest.mark.asyncio
     async def test_prepare_data(self,
+                                redis_clear_data_before,
                                 es_write_data,
                                 session_client):
         # Collect film uuid
