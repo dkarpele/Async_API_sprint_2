@@ -76,9 +76,11 @@ class ListService:
         res = data.values()
         if sort:
             if sort[0] == '-':
-                # раз в сортировке есть знак минус, то его нужно убрать,
-                # чтобы получить название поля, по которому идёт сортировка, используем срез, убирая нулевой элемент
-                res = sorted(res, key=lambda x: json.loads(x)[sort[1:]], reverse=True)
+                # Раз в сортировке есть знак минус, то его нужно убрать,
+                # чтобы получить название поля, по которому идёт сортировка.
+                # Используем срез, убирая нулевой элемент
+                res = sorted(res, key=lambda x: json.loads(x)[sort[1:]],
+                             reverse=True)
             else:
                 res = sorted(res, key=lambda x: json.loads(x)[sort])
         return [self.model.parse_raw(i) for i in res]

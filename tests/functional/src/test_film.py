@@ -409,7 +409,6 @@ class TestFilmsSortRedis:
         async with session_client.get(url) as response:
             assert response.status == 200
 
-    # This test DOESN'T work because of #12, marking as xfail
     @pytest.mark.parametrize(
         'url, expected_answer, reverse',
         params_list
