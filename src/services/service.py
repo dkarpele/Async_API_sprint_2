@@ -68,7 +68,7 @@ class ListService:
 
         return entities
 
-    async def _get_from_cache(self, name: str = None, sort: str = None) -> Optional:
+    async def _get_from_cache(self, name: str = None, sort: str = None) -> list | None:
         data = await self.redis.hgetall(name)
         if not data:
             return None
@@ -76,6 +76,8 @@ class ListService:
         res = data.values()
         if sort:
             if sort[0] == '-':
+                # раз в сортировке есть знак минус, то его нужно убрать,
+                # чтобы получить название поля, по которому идёт сортировка, используем срез, убирая нулевой элемент
                 res = sorted(res, key=lambda x: json.loads(x)[sort[1:]], reverse=True)
             else:
                 res = sorted(res, key=lambda x: json.loads(x)[sort])
