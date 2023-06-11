@@ -415,7 +415,6 @@ class TestFilmsSortRedis:
         params_list
     )
     @pytest.mark.asyncio
-    @pytest.mark.xfail
     async def test_get_from_redis(self,
                                   redis_clear_data_after,
                                   session_client,
