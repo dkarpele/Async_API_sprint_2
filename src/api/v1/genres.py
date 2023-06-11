@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends
 from api.v1 import _details, _list
 from models.model import Model
 from services.service import IdRequestService, ListService

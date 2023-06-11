@@ -1,12 +1,8 @@
 from functools import lru_cache
-from typing import Optional
-
-from elasticsearch import AsyncElasticsearch, NotFoundError
 from fastapi import Depends
-from redis.asyncio import Redis
 
 from db.elastic import get_elastic, Elastic
-from db.redis import get_redis
+from db.redis import get_redis, Redis
 from models.films import Film
 from services.service import IdRequestService, ListService
 
