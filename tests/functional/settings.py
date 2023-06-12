@@ -10,7 +10,6 @@ class Settings(BaseSettings):
     es_indexes: str = Field(..., env='ELASTIC_INDEXES')
     es_id_field: str = 'id'
     service_url: str = Field('http://0.0.0.0:8000', env='SERVICE_URL')
-    #es_index_mapping: dict =
 
     class Config:
         env_file = '.env'

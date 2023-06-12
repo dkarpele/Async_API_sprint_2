@@ -10,7 +10,7 @@ class Elastic(AbstractStorage):
     def __init__(self, **params):
         self.session = AsyncElasticsearch(**params)
 
-    async def get_by_id(self, _id: str, index: str, model) -> dict | None:
+    async def get_by_id(self, _id: str, index: str, model) -> Optional:
         try:
             doc = await self.session.get(index=index, id=_id)
         except NotFoundError:

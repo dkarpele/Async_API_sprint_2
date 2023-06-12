@@ -1,11 +1,8 @@
 from functools import lru_cache
-
-from elasticsearch import AsyncElasticsearch
 from fastapi import Depends
-from redis.asyncio import Redis
 
 from db.elastic import get_elastic, Elastic
-from db.redis import get_redis
+from db.redis import get_redis, Redis
 from models.genres import Genre
 from services.service import IdRequestService, ListService
 

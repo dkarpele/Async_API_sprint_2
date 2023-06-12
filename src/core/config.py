@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     ELASTIC_PORT: int = Field(..., env='ELASTIC_PORT')
     HOST: str = Field(..., env='HOST')
     PORT: int = Field(..., env='PORT')
+    CACHE_EXPIRE_IN_SECONDS: int = Field(..., env='CACHE_EXPIRE_IN_SECONDS')
 
     class Config:
         env_file = '.env'

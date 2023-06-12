@@ -6,7 +6,7 @@ from models.films import Film
 
 
 async def _details(_service, _id: str, index: str = None):
-    res = await _service.get_by_id(_id, index)
+    res = await _service.process_by_id(_id, index)
     if not res:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND,
                             detail=f'{_id} not found in {index}')
@@ -20,7 +20,7 @@ async def _list(_service,
                 key: str = None,
                 page: int = None,
                 size: int = None):
-    res = await _service.get_list(index, sort, search, key, page, size)
+    res = await _service.process_list(index, sort, search, key, page, size)
     if not res:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND,
                             detail=f'{index} not found')
