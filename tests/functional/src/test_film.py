@@ -138,9 +138,6 @@ class TestFilms:
             except (KeyError, IndexError):
                 pass
 
-    # There is a bug https://github.com/dkarpele/Async_API_sprint_2/issues/12
-    # Test below works only because redis DB clears after each run with the
-    # help of fixture `redis_clear_data_before_after`
     @pytest.mark.parametrize(
         'url, expected_answer, reverse',
         [
@@ -201,8 +198,8 @@ class TestFilmID:
     @pytest.mark.asyncio
     async def test_get_film_by_id(self,
                                   session_client,
-                                  get_film_id):
-        _id = get_film_id
+                                  get_by_id):
+        _id = await get_by_id(f'{PREFIX}/?page_size=1')
         expected_answer = {'status': 200, 'length': 8, 'title': 'The Star'}
         url = settings.service_url + PREFIX + '/' + _id
 
@@ -453,14 +450,11 @@ class TestFilmIdRedis:
     async def test_prepare_data(self,
                                 redis_clear_data_before,
                                 es_write_data,
-                                session_client):
+                                session_client,
+                                get_by_id):
         # Collect film uuid
         global _id
-        url = settings.service_url + '/api/v1/films/?page_size=1'
-        async with session_client.get(url) as response:
-            body = await response.json()
-            assert response.status == 200
-            _id = body[0]['uuid']
+        _id = await get_by_id(f'{PREFIX}/?page_size=1')
 
         # Find data by id
         url = settings.service_url + PREFIX + '/' + _id
@@ -477,7 +471,7 @@ class TestFilmIdRedis:
         try:
             url = settings.service_url + PREFIX + '/' + _id
         except NameError:
-            logging.error("Can't run the test /films/UUID with unknown id")
+            logging.error(f"Can't run the test {PREFIX}/UUID with unknown id")
             assert False
 
         async with session_client.get(url) as response:

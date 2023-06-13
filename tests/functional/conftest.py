@@ -1,5 +1,6 @@
 import aiohttp
 import asyncio
+
 import pytest_asyncio
 import redis
 from elasticsearch import AsyncElasticsearch
@@ -20,6 +21,13 @@ def event_loop():
 async def es_client():
     client = AsyncElasticsearch(
         hosts=f'{settings.elastic_host}:{settings.elastic_port}')
+    yield client
+    await client.close()
+
+
+@pytest_asyncio.fixture(scope='session')
+async def session_client():
+    client = aiohttp.ClientSession()
     yield client
     await client.close()
 
@@ -49,14 +57,7 @@ async def redis_clear_data_before():
     yield
 
 
-@pytest_asyncio.fixture(scope='session')
-async def session_client():
-    client = aiohttp.ClientSession()
-    yield client
-    await client.close()
-
-
-@pytest_asyncio.fixture
+@pytest_asyncio.fixture(scope='class')
 async def es_write_data(es_client):
     def get_es_bulk_query(_index, data):
         doc = []
@@ -85,10 +86,12 @@ async def es_write_data(es_client):
         await es_client.indices.delete(index=index)
 
 
-@pytest_asyncio.fixture
-async def get_film_id(es_write_data, session_client):
-    url = settings.service_url + '/api/v1/films/?page_size=1'
+@pytest_asyncio.fixture(scope='function')
+async def get_by_id(session_client):
+    async def inner(prefix: str):
+        url = settings.service_url + prefix
 
-    async with session_client.get(url) as response:
-        body = await response.json()
-        yield body[0]['uuid']
+        async with session_client.get(url) as response:
+            body = await response.json()
+            return body[0]['uuid']
+    yield inner
