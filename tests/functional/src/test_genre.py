@@ -20,7 +20,7 @@ class TestGenres:
         [
             (
                     f'{PREFIX}',
-                    {'status': 200, 'length': 3, 'name': 'Fantasy'}
+                    {'status': 200, 'length': 3, 'name': 'Action'}
             ),
         ]
     )
@@ -46,7 +46,7 @@ class TestGenreID:
                                    session_client,
                                    get_id):
         _id = await get_id(f'{PREFIX}')
-        expected_answer = {'status': 200, 'length': 2, 'name': 'Fantasy'}
+        expected_answer = {'status': 200, 'length': 2, 'name': 'Action'}
         url = settings.service_url + PREFIX + '/' + _id
 
         async with session_client.get(url) as response:
@@ -85,7 +85,7 @@ class TestGenresRedis:
         [
             (
                 f'{PREFIX}',
-                {'status': 200, 'length': 3, 'name': 'Fantasy'}
+                {'status': 200, 'length': 3, 'name': 'Action'}
             )
         ]
 
@@ -122,7 +122,8 @@ class TestGenresRedis:
             body = await response.json()
             assert response.status == expected_answer['status']
             assert len(body) == expected_answer['length']
-            assert body[0]['name'] == expected_answer['name']
+            assert sorted(body, key=lambda x: x['name'])[0]['name'] ==\
+                   expected_answer['name']
             assert list(body[0].keys()) == ['uuid', 'name']
 
 
@@ -160,7 +161,7 @@ class TestGenreIdRedis:
                                   redis_clear_data_after,
                                   session_client):
 
-        expected_answer = {'status': 200, 'length': 2, 'name': 'Fantasy'}
+        expected_answer = {'status': 200, 'length': 2, 'name': 'Action'}
         try:
             url = settings.service_url + PREFIX + '/' + _id
         except NameError:

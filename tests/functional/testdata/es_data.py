@@ -28,6 +28,11 @@ movies = [{
 
 genres = [
     {
+        'id': '789',
+        'name': 'Action',
+        'description': 'Action description'
+    },
+    {
         'id': '123',
         'name': 'Fantasy',
         'description': 'Fantasy description!'
@@ -36,11 +41,6 @@ genres = [
         'id': '456',
         'name': 'Music Story',
         'description': 'Music description'
-    },
-    {
-        'id': '789',
-        'name': 'Action',
-        'description': 'Action description'
     }
 ]
 
