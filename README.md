@@ -14,7 +14,7 @@
 
 ## Installation
 
-1. Clone [repo](https://github.com/dkarpele/Async_API_sprint_1).
+1. Clone [repo](https://github.com/dkarpele/Async_API_sprint_2).
 2. Create ```.env``` file according to ```.env.example```.
 3. Launch the project ```docker-compose up```.
 
