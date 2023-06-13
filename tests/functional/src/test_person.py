@@ -135,14 +135,11 @@ class TestPersonIdRedis:
     async def test_prepare_data(self,
                                 redis_clear_data_before,
                                 es_write_data,
-                                session_client):
+                                session_client,
+                                get_by_id):
         # Collect film uuid
         global _id
-        url = settings.service_url + '/api/v1/persons/search?query=Jack&page_size=1'
-        async with session_client.get(url) as response:
-            body = await response.json()
-            assert response.status == 200
-            _id = body[0]['uuid']
+        _id = await get_by_id(f'{PREFIX}/?search?query=Jack&page_size=1')
 
         # Find data by id
         url = settings.service_url + PREFIX + '/' + _id
