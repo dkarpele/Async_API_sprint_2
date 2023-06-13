@@ -44,8 +44,8 @@ class TestGenreID:
     @pytest.mark.asyncio
     async def test_get_genre_by_id(self,
                                    session_client,
-                                   get_by_id):
-        _id = await get_by_id(f'{PREFIX}')
+                                   get_id):
+        _id = await get_id(f'{PREFIX}')
         expected_answer = {'status': 200, 'length': 2, 'name': 'Fantasy'}
         url = settings.service_url + PREFIX + '/' + _id
 
@@ -144,10 +144,10 @@ class TestGenreIdRedis:
                                 redis_clear_data_before,
                                 es_write_data,
                                 session_client,
-                                get_by_id):
+                                get_id):
         # Collect uuid
         global _id
-        _id = await get_by_id(f'{PREFIX}')
+        _id = await get_id(f'{PREFIX}')
 
         # Find data by id
         url = settings.service_url + PREFIX + '/' + _id

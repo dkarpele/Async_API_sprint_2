@@ -87,7 +87,7 @@ async def es_write_data(es_client):
 
 
 @pytest_asyncio.fixture(scope='function')
-async def get_by_id(session_client):
+async def get_id(session_client):
     async def inner(prefix: str):
         url = settings.service_url + prefix
 

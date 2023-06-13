@@ -20,22 +20,18 @@ Paginate = Annotated[PaginateModel, Depends(PaginateModel)]
 INDEX = 'movies'
 
 
-# Модель ответа API
-class Film(Model):
+class FilmList(Model):
     uuid: str
     title: str
     imdb_rating: float | None = None
+
+
+class Film(FilmList):
     description: str | None = None
     genre: list[dict] | None = None
     actors: list[dict] | None = None
     writers: list[dict] | None = None
     directors: list[dict] | None = None
-
-
-class FilmList(Model):
-    uuid: str
-    title: str
-    imdb_rating: float | None = None
 
 
 @router.get('/search',

@@ -198,8 +198,8 @@ class TestFilmID:
     @pytest.mark.asyncio
     async def test_get_film_by_id(self,
                                   session_client,
-                                  get_by_id):
-        _id = await get_by_id(f'{PREFIX}/?page_size=1')
+                                  get_id):
+        _id = await get_id(f'{PREFIX}/?page_size=1')
         expected_answer = {'status': 200, 'length': 8, 'title': 'The Star'}
         url = settings.service_url + PREFIX + '/' + _id
 
@@ -451,10 +451,10 @@ class TestFilmIdRedis:
                                 redis_clear_data_before,
                                 es_write_data,
                                 session_client,
-                                get_by_id):
+                                get_id):
         # Collect film uuid
         global _id
-        _id = await get_by_id(f'{PREFIX}/?page_size=1')
+        _id = await get_id(f'{PREFIX}/?page_size=1')
 
         # Find data by id
         url = settings.service_url + PREFIX + '/' + _id

@@ -17,8 +17,8 @@ class TestPersonID:
     @pytest.mark.asyncio
     async def test_get_person_by_id(self,
                                     session_client,
-                                    get_by_id):
-        _id = await get_by_id(f'{PREFIX}/search?query=Jack&page_number=1&page_size=1')
+                                    get_id):
+        _id = await get_id(f'{PREFIX}/search?query=Jack&page_number=1&page_size=1')
         expected_answer = {'status': 200, 'length': 3, 'full_name': 'Jack Jones'}
         url = settings.service_url + PREFIX + '/' + _id
 
@@ -45,8 +45,8 @@ class TestPersonID:
     @pytest.mark.asyncio
     async def test_get_persons_films_by_id(self,
                                            session_client,
-                                           get_by_id):
-        _id = await get_by_id(f'{PREFIX}/search?query=Jack&page_number=1&page_size=1')
+                                           get_id):
+        _id = await get_id(f'{PREFIX}/search?query=Jack&page_number=1&page_size=1')
         expected_answer = {'status': 200, 'length': 50}
         url = settings.service_url + PREFIX + '/' + _id + '/film'
 
@@ -136,10 +136,10 @@ class TestPersonIdRedis:
                                 redis_clear_data_before,
                                 es_write_data,
                                 session_client,
-                                get_by_id):
+                                get_id):
         # Collect film uuid
         global _id
-        _id = await get_by_id(f'{PREFIX}/?search?query=Jack&page_size=1')
+        _id = await get_id(f'{PREFIX}/search?query=Jack&page_size=1')
 
         # Find data by id
         url = settings.service_url + PREFIX + '/' + _id
