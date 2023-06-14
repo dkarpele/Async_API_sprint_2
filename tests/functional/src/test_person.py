@@ -18,8 +18,11 @@ class TestPersonID:
     async def test_get_person_by_id(self,
                                     session_client,
                                     get_id):
-        _id = await get_id(f'{PREFIX}/search?query=Jack&page_number=1&page_size=1')
-        expected_answer = {'status': 200, 'length': 3, 'full_name': 'Jack Jones'}
+        _id = await get_id(
+            f'{PREFIX}/search?query=Jack&page_number=1&page_size=1')
+        expected_answer = {'status': 200,
+                           'length': 3,
+                           'full_name': 'Jack Jones'}
         url = settings.service_url + PREFIX + '/' + _id
 
         async with session_client.get(url) as response:
@@ -46,7 +49,8 @@ class TestPersonID:
     async def test_get_persons_films_by_id(self,
                                            session_client,
                                            get_id):
-        _id = await get_id(f'{PREFIX}/search?query=Jack&page_number=1&page_size=1')
+        _id = await get_id(
+            f'{PREFIX}/search?query=Jack&page_number=1&page_size=1')
         expected_answer = {'status': 200, 'length': 50}
         url = settings.service_url + PREFIX + '/' + _id + '/film'
 
@@ -64,15 +68,18 @@ class TestPersonSearch:
         [
             (
                     f'{PREFIX}/search?query=Jack',
-                    {'status': 200, 'length': 1, 'full_name': 'Jack Jones', 'len_films': 50}
+                    {'status': 200, 'length': 1, 'full_name': 'Jack Jones',
+                     'len_films': 50}
             ),
             (
                     f'{PREFIX}/search?query=Jack',
-                    {'status': 200, 'length': 1, 'full_name': 'Jack Jones', 'len_films': 50}
+                    {'status': 200, 'length': 1, 'full_name': 'Jack Jones',
+                     'len_films': 50}
             ),
             (
                     f'{PREFIX}/search?query=jack',
-                    {'status': 200, 'length': 1, 'full_name': 'Jack Jones', 'len_films': 50}
+                    {'status': 200, 'length': 1, 'full_name': 'Jack Jones',
+                     'len_films': 50}
             ),
         ]
     )
@@ -168,7 +175,8 @@ class TestPersonIdRedis:
                                   redis_clear_data_after,
                                   session_client):
 
-        expected_answer = {'status': 200, 'length': 3, 'full_name': 'Jack Jones'}
+        expected_answer = {'status': 200, 'length': 3,
+                           'full_name': 'Jack Jones'}
         try:
             url = settings.service_url + PREFIX + '/' + _id
         except NameError:
