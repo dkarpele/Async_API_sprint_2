@@ -18,8 +18,11 @@ class TestPersonID:
     async def test_get_person_by_id(self,
                                     session_client,
                                     get_id):
-        _id = await get_id(f'{PREFIX}/search?query=Jack&page_number=1&page_size=1')
-        expected_answer = {'status': 200, 'length': 3, 'full_name': 'Jack Jones'}
+        _id = await get_id(
+            f'{PREFIX}/search?query=Jack&page_number=1&page_size=1')
+        expected_answer = {'status': 200,
+                           'length': 3,
+                           'full_name': 'Jack Jones'}
         url = settings.service_url + PREFIX + '/' + _id
 
         async with session_client.get(url) as response:
@@ -46,7 +49,8 @@ class TestPersonID:
     async def test_get_persons_films_by_id(self,
                                            session_client,
                                            get_id):
-        _id = await get_id(f'{PREFIX}/search?query=Jack&page_number=1&page_size=1')
+        _id = await get_id(
+            f'{PREFIX}/search?query=Jack&page_number=1&page_size=1')
         expected_answer = {'status': 200, 'length': 50}
         url = settings.service_url + PREFIX + '/' + _id + '/film'
 
@@ -64,23 +68,52 @@ class TestPersonSearch:
         [
             (
                     f'{PREFIX}/search?query=Jack',
-                    {'status': 200, 'length': 1, 'full_name': 'Jack Jones', 'len_films': 50}
+                    {'status': 200, 'length': 1, 'full_name': 'Jack Jones',
+                     'len_films': 50}
             ),
             (
                     f'{PREFIX}/search?query=Jack',
-                    {'status': 200, 'length': 1, 'full_name': 'Jack Jones', 'len_films': 50}
+                    {'status': 200, 'length': 1, 'full_name': 'Jack Jones',
+                     'len_films': 50}
             ),
             (
                     f'{PREFIX}/search?query=jack',
-                    {'status': 200, 'length': 1, 'full_name': 'Jack Jones', 'len_films': 50}
+                    {'status': 200, 'length': 1, 'full_name': 'Jack Jones',
+                     'len_films': 50}
             ),
+        ]
+    )
+    @pytest.mark.asyncio
+    async def test_search_persons(self,
+                                  session_client,
+                                  url,
+                                  expected_answer):
+        url = settings.service_url + url
 
-            (
-                    f'{PREFIX}/search?query=Jack&page_number=4&page_size=5000',
-                    {'status': 422,
-                     'type0': 'value_error.number.not_le',
-                     'msg': 'less than or equal to 500'}
-            ),
+        async with session_client.get(url) as response:
+            body = await response.json()
+            assert response.status == expected_answer['status']
+            assert len(body) == expected_answer['length']
+            assert body[0]['full_name'] == expected_answer['full_name']
+            assert list(body[0].keys()) == ['uuid', 'full_name', 'films']
+            assert type(body[0]['films']) == list
+            assert len(body[0]['films']) == expected_answer['len_films']
+
+    @pytest.mark.asyncio
+    async def test_search_persons_pagination_negative(self,
+                                                      session_client):
+        url = settings.service_url + \
+              f'{PREFIX}/search?query=Jack&page_number=4&page_size=5000'
+
+        async with session_client.get(url) as response:
+            body = await response.json()
+            assert response.status == 422
+            assert body['detail'][0]['type'] == 'value_error.number.not_le'
+            assert 'less than or equal to 500' in body['detail'][0]['msg']
+
+    @pytest.mark.parametrize(
+        'url, expected_answer',
+        [
             (
                     f'{PREFIX}/search?query=doesntexist',
                     {'status': 404, 'detail': 'persons not found'}
@@ -96,26 +129,16 @@ class TestPersonSearch:
         ]
     )
     @pytest.mark.asyncio
-    async def test_search_persons(self,
-                                  session_client,
-                                  url,
-                                  expected_answer):
+    async def test_search_persons_not_found(self,
+                                            session_client,
+                                            url,
+                                            expected_answer):
         url = settings.service_url + url
 
         async with session_client.get(url) as response:
             body = await response.json()
             assert response.status == expected_answer['status']
-            if 'doesntexist' in url or 'page_number=4&page_size=4' in url or url.endswith('='):
-                assert body['detail'] == expected_answer['detail']
-            elif 'page_size=5000' in url:
-                assert body['detail'][0]['type'] == expected_answer['type0']
-                assert expected_answer['msg'] in body['detail'][0]['msg']
-            else:
-                assert len(body) == expected_answer['length']
-                assert body[0]['full_name'] == expected_answer['full_name']
-                assert list(body[0].keys()) == ['uuid', 'full_name', 'films']
-                assert type(body[0]['films']) == list
-                assert len(body[0]['films']) == expected_answer['len_films']
+            assert body['detail'] == expected_answer['detail']
 
 
 class TestPersonIdRedis:
@@ -152,7 +175,8 @@ class TestPersonIdRedis:
                                   redis_clear_data_after,
                                   session_client):
 
-        expected_answer = {'status': 200, 'length': 3, 'full_name': 'Jack Jones'}
+        expected_answer = {'status': 200, 'length': 3,
+                           'full_name': 'Jack Jones'}
         try:
             url = settings.service_url + PREFIX + '/' + _id
         except NameError:
@@ -166,7 +190,6 @@ class TestPersonIdRedis:
             assert len(body) == expected_answer['length']
             assert body['uuid'] == _id
             assert list(body.keys()) == ['uuid', 'full_name', 'films']
-
 
     @pytest.mark.asyncio
     async def test_get_films_from_redis(self,

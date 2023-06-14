@@ -4,7 +4,6 @@ import uvicorn
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.responses import ORJSONResponse
-from redis.asyncio import Redis
 
 from api.v1 import films, genres, persons
 from core.config import settings
