@@ -1,6 +1,7 @@
 import logging
-
 import pytest
+
+from http import HTTPStatus
 from logging import config as logging_config
 
 from tests.functional.settings import settings
@@ -20,7 +21,7 @@ class TestGenres:
         [
             (
                     f'{PREFIX}',
-                    {'status': 200, 'length': 3, 'name': 'Action'}
+                    {'status': HTTPStatus.OK, 'length': 3, 'name': 'Action'}
             ),
         ]
     )
@@ -46,7 +47,7 @@ class TestGenreID:
                                    session_client,
                                    get_id):
         _id = await get_id(f'{PREFIX}')
-        expected_answer = {'status': 200, 'length': 2, 'name': 'Action'}
+        expected_answer = {'status': HTTPStatus.OK, 'length': 2, 'name': 'Action'}
         url = settings.service_url + PREFIX + '/' + _id
 
         async with session_client.get(url) as response:
@@ -62,7 +63,7 @@ class TestGenreID:
                                            session_client):
 
         url = settings.service_url + PREFIX + '/' + 'BAD_ID'
-        expected_answer = {'status': 404}
+        expected_answer = {'status': HTTPStatus.NOT_FOUND}
         async with session_client.get(url) as response:
             body = await response.json()
             assert response.status == expected_answer['status']
@@ -85,7 +86,7 @@ class TestGenresRedis:
         [
             (
                 f'{PREFIX}',
-                {'status': 200, 'length': 3, 'name': 'Action'}
+                {'status': HTTPStatus.OK, 'length': 3, 'name': 'Action'}
             )
         ]
 
@@ -104,7 +105,7 @@ class TestGenresRedis:
         url = settings.service_url + url
 
         async with session_client.get(url) as response:
-            assert response.status == 200
+            assert response.status == HTTPStatus.OK
 
     # This test DOESN'T add data to ES, but adds data to redis
     @pytest.mark.parametrize(
@@ -153,7 +154,7 @@ class TestGenreIdRedis:
         # Find data by id
         url = settings.service_url + PREFIX + '/' + _id
         async with session_client.get(url) as response:
-            assert response.status == 200
+            assert response.status == HTTPStatus.OK
 
     # This test DOESN'T add data to ES, but adds data to redis
     @pytest.mark.asyncio
@@ -161,7 +162,7 @@ class TestGenreIdRedis:
                                   redis_clear_data_after,
                                   session_client):
 
-        expected_answer = {'status': 200, 'length': 2, 'name': 'Action'}
+        expected_answer = {'status': HTTPStatus.OK, 'length': 2, 'name': 'Action'}
         try:
             url = settings.service_url + PREFIX + '/' + _id
         except NameError:
