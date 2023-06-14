@@ -9,6 +9,7 @@ from tests.functional.utils.logger import LOGGING
 
 # Применяем настройки логирования
 logging_config.dictConfig(LOGGING)
+pytestmark = pytest.mark.asyncio
 
 PREFIX = '/api/v1/films'
 
@@ -53,7 +54,6 @@ class TestFilms:
             ),
         ]
     )
-    @pytest.mark.asyncio
     async def test_get_all_films(self,
                                  session_client,
                                  url,
@@ -62,6 +62,7 @@ class TestFilms:
 
         async with session_client.get(url) as response:
             body = await response.json()
+
             assert response.status == expected_answer['status']
             assert len(body) == expected_answer['length']
             assert body[0]['title'] == expected_answer['title']
@@ -81,7 +82,6 @@ class TestFilms:
             ),
         ]
     )
-    @pytest.mark.asyncio
     async def test_get_all_films_not_found(self,
                                            session_client,
                                            url,
@@ -90,6 +90,7 @@ class TestFilms:
 
         async with session_client.get(url) as response:
             body = await response.json()
+
             assert response.status == expected_answer['status']
             assert body['detail'] == expected_answer['detail']
 
@@ -136,7 +137,6 @@ class TestFilms:
             )
         ]
     )
-    @pytest.mark.asyncio
     async def test_get_all_films_pagination_negative(self,
                                                      session_client,
                                                      url,
@@ -145,6 +145,7 @@ class TestFilms:
 
         async with session_client.get(url) as response:
             body = await response.json()
+
             assert response.status == expected_answer['status']
             assert body['detail'][0]['type'] == expected_answer['type0']
             assert expected_answer['msg'] in body['detail'][0]['msg']
@@ -173,7 +174,6 @@ class TestFilms:
             )
         ]
     )
-    @pytest.mark.asyncio
     async def test_get_all_films_sort(self,
                                       session_client,
                                       url,
@@ -183,6 +183,7 @@ class TestFilms:
 
         async with session_client.get(url) as response:
             body = await response.json()
+
             assert response.status == expected_answer['status']
             imdb_rating_list = [i['imdb_rating'] for i in body]
             assert sorted(imdb_rating_list, reverse=reverse) == \
@@ -203,7 +204,6 @@ class TestFilms:
             )
         ]
     )
-    @pytest.mark.asyncio
     async def test_get_all_films_sort_not_found(self,
                                                 session_client,
                                                 url,
@@ -212,13 +212,13 @@ class TestFilms:
 
         async with session_client.get(url) as response:
             body = await response.json()
+
             assert response.status == expected_answer['status']
             assert body['detail'] == expected_answer['detail']
 
 
 @pytest.mark.usefixtures('redis_clear_data_before_after', 'es_write_data')
 class TestFilmID:
-    @pytest.mark.asyncio
     async def test_get_film_by_id(self,
                                   session_client,
                                   get_id):
@@ -228,6 +228,7 @@ class TestFilmID:
 
         async with session_client.get(url) as response:
             body = await response.json()
+
             assert response.status == expected_answer['status']
             assert body['title'] == expected_answer['title']
             assert len(body) == expected_answer['length']
@@ -236,13 +237,14 @@ class TestFilmID:
                                          'description', 'genre', 'actors',
                                          'writers', 'directors']
 
-    @pytest.mark.asyncio
     async def test_get_film_id_not_exists(self,
                                           session_client):
         url = settings.service_url + PREFIX + '/' + 'BAD_ID'
         expected_answer = {'status': HTTPStatus.NOT_FOUND}
+
         async with session_client.get(url) as response:
             body = await response.json()
+
             assert response.status == expected_answer['status']
             assert body['detail'] == "BAD_ID not found in movies"
 
@@ -270,7 +272,6 @@ class TestFilmSearch:
             ),
         ]
     )
-    @pytest.mark.asyncio
     async def test_search_films(self,
                                 session_client,
                                 url,
@@ -279,19 +280,21 @@ class TestFilmSearch:
 
         async with session_client.get(url) as response:
             body = await response.json()
+
             assert response.status == expected_answer['status']
             assert len(body) == expected_answer['length']
             assert body[0]['title'] == expected_answer['title']
             assert list(body[0].keys()) == ['uuid', 'title', 'imdb_rating']
             assert type(body[0]['imdb_rating']) == float
 
-    @pytest.mark.asyncio
     async def test_search_films_pagination_negative(self,
                                                     session_client):
         url = settings.service_url + \
               f'{PREFIX}/search?query=Star&page_number=4&page_size=5000'
+
         async with session_client.get(url) as response:
             body = await response.json()
+
             assert response.status == HTTPStatus.UNPROCESSABLE_ENTITY
             assert body['detail'][0]['type'] == 'value_error.number.not_le'
             assert 'less than or equal to 500' in body['detail'][0]['msg']
@@ -311,7 +314,6 @@ class TestFilmSearch:
             ),
         ]
     )
-    @pytest.mark.asyncio
     async def test_search_films_not_found(self,
                                           session_client,
                                           url,
@@ -320,6 +322,7 @@ class TestFilmSearch:
 
         async with session_client.get(url) as response:
             body = await response.json()
+
             assert response.status == expected_answer['status']
             assert body['detail'] == expected_answer['detail']
 
@@ -369,7 +372,6 @@ class TestFilmsRedis:
         'url, expected_answer',
         params_list
     )
-    @pytest.mark.asyncio
     async def test_prepare_data(self,
                                 redis_clear_data_before,
                                 es_write_data,
@@ -386,15 +388,16 @@ class TestFilmsRedis:
         'url, expected_answer',
         params_list
     )
-    @pytest.mark.asyncio
     async def test_get_from_redis(self,
                                   redis_clear_data_after,
                                   session_client,
                                   url,
                                   expected_answer):
         url = settings.service_url + url
+
         async with session_client.get(url) as response:
             body = await response.json()
+
             assert response.status == expected_answer['status']
             assert len(body) == expected_answer['length']
             assert body[0]['title'] == expected_answer['title']
@@ -433,7 +436,6 @@ class TestFilmsSortRedis:
         'url, expected_answer, reverse',
         params_list
     )
-    @pytest.mark.asyncio
     async def test_prepare_data(self,
                                 redis_clear_data_before,
                                 es_write_data,
@@ -450,7 +452,6 @@ class TestFilmsSortRedis:
         'url, expected_answer, reverse',
         params_list
     )
-    @pytest.mark.asyncio
     async def test_get_from_redis(self,
                                   redis_clear_data_after,
                                   session_client,
@@ -461,6 +462,7 @@ class TestFilmsSortRedis:
 
         async with session_client.get(url) as response:
             body = await response.json()
+
             assert response.status == expected_answer['status']
             imdb_rating_list = [i['imdb_rating'] for i in body]
             assert sorted(imdb_rating_list, reverse=reverse) == \
@@ -480,7 +482,6 @@ class TestFilmIdRedis:
     """
 
     # This test only adds data to ES, adds data to redis, removes data from ES
-    @pytest.mark.asyncio
     async def test_prepare_data(self,
                                 redis_clear_data_before,
                                 es_write_data,
@@ -492,16 +493,18 @@ class TestFilmIdRedis:
 
         # Find data by id
         url = settings.service_url + PREFIX + '/' + _id
+
         async with session_client.get(url) as response:
             assert response.status == HTTPStatus.OK
 
     # This test DOESN'T add data to ES, but adds data to redis
-    @pytest.mark.asyncio
     async def test_get_from_redis(self,
                                   redis_clear_data_after,
                                   session_client):
 
-        expected_answer = {'status': HTTPStatus.OK, 'length': 8, 'title': 'The Star'}
+        expected_answer = {'status': HTTPStatus.OK,
+                           'length': 8,
+                           'title': 'The Star'}
         try:
             url = settings.service_url + PREFIX + '/' + _id
         except NameError:
@@ -510,6 +513,7 @@ class TestFilmIdRedis:
 
         async with session_client.get(url) as response:
             body = await response.json()
+
             assert response.status == expected_answer['status']
             assert body['title'] == expected_answer['title']
             assert len(body) == expected_answer['length']

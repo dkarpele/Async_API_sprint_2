@@ -9,6 +9,7 @@ from tests.functional.utils.logger import LOGGING
 
 # Применяем настройки логирования
 logging_config.dictConfig(LOGGING)
+pytestmark = pytest.mark.asyncio
 
 PREFIX = '/api/v1/genres'
 
@@ -25,7 +26,6 @@ class TestGenres:
             ),
         ]
     )
-    @pytest.mark.asyncio
     async def test_get_all_genres(self,
                                   session_client,
                                   url,
@@ -34,6 +34,7 @@ class TestGenres:
 
         async with session_client.get(url) as response:
             body = await response.json()
+
             assert response.status == expected_answer['status']
             assert len(body) == expected_answer['length']
             assert body[0]['name'] == expected_answer['name']
@@ -42,30 +43,33 @@ class TestGenres:
 
 @pytest.mark.usefixtures('redis_clear_data_before_after', 'es_write_data')
 class TestGenreID:
-    @pytest.mark.asyncio
     async def test_get_genre_by_id(self,
                                    session_client,
                                    get_id):
         _id = await get_id(f'{PREFIX}')
-        expected_answer = {'status': HTTPStatus.OK, 'length': 2, 'name': 'Action'}
+        expected_answer = {'status': HTTPStatus.OK,
+                           'length': 2,
+                           'name': 'Action'}
         url = settings.service_url + PREFIX + '/' + _id
 
         async with session_client.get(url) as response:
             body = await response.json()
+
             assert response.status == expected_answer['status']
             assert body['name'] == expected_answer['name']
             assert len(body) == expected_answer['length']
             assert body['uuid'] == _id
             assert list(body.keys()) == ['uuid', 'name']
 
-    @pytest.mark.asyncio
     async def test_get_genre_id_not_exists(self,
                                            session_client):
 
         url = settings.service_url + PREFIX + '/' + 'BAD_ID'
         expected_answer = {'status': HTTPStatus.NOT_FOUND}
+
         async with session_client.get(url) as response:
             body = await response.json()
+
             assert response.status == expected_answer['status']
             assert body['detail'] == "BAD_ID not found in genres"
 
@@ -95,7 +99,6 @@ class TestGenresRedis:
         'url, expected_answer',
         params_list
     )
-    @pytest.mark.asyncio
     async def test_prepare_data(self,
                                 redis_clear_data_before,
                                 es_write_data,
@@ -112,15 +115,16 @@ class TestGenresRedis:
         'url, expected_answer',
         params_list
     )
-    @pytest.mark.asyncio
     async def test_get_from_redis(self,
                                   redis_clear_data_after,
                                   session_client,
                                   url,
                                   expected_answer):
         url = settings.service_url + url
+
         async with session_client.get(url) as response:
             body = await response.json()
+
             assert response.status == expected_answer['status']
             assert len(body) == expected_answer['length']
             assert sorted(body, key=lambda x: x['name'])[0]['name'] ==\
@@ -141,7 +145,6 @@ class TestGenreIdRedis:
     """
 
     # This test only adds data to ES, adds data to redis, removes data from ES
-    @pytest.mark.asyncio
     async def test_prepare_data(self,
                                 redis_clear_data_before,
                                 es_write_data,
@@ -153,16 +156,18 @@ class TestGenreIdRedis:
 
         # Find data by id
         url = settings.service_url + PREFIX + '/' + _id
+
         async with session_client.get(url) as response:
             assert response.status == HTTPStatus.OK
 
     # This test DOESN'T add data to ES, but adds data to redis
-    @pytest.mark.asyncio
     async def test_get_from_redis(self,
                                   redis_clear_data_after,
                                   session_client):
 
-        expected_answer = {'status': HTTPStatus.OK, 'length': 2, 'name': 'Action'}
+        expected_answer = {'status': HTTPStatus.OK,
+                           'length': 2,
+                           'name': 'Action'}
         try:
             url = settings.service_url + PREFIX + '/' + _id
         except NameError:
@@ -171,6 +176,7 @@ class TestGenreIdRedis:
 
         async with session_client.get(url) as response:
             body = await response.json()
+
             assert response.status == expected_answer['status']
             assert body['name'] == expected_answer['name']
             assert len(body) == expected_answer['length']
