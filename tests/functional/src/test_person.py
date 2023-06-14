@@ -86,22 +86,17 @@ class TestPersonSearch:
         async with session_client.get(url) as response:
             body = await response.json()
             assert response.status == expected_answer['status']
-            if 'doesntexist' in url or 'page_number=4&page_size=4' in url or url.endswith('='):
-                assert body['detail'] == expected_answer['detail']
-            elif 'page_size=5000' in url:
-                assert body['detail'][0]['type'] == expected_answer['type0']
-                assert expected_answer['msg'] in body['detail'][0]['msg']
-            else:
-                assert len(body) == expected_answer['length']
-                assert body[0]['full_name'] == expected_answer['full_name']
-                assert list(body[0].keys()) == ['uuid', 'full_name', 'films']
-                assert type(body[0]['films']) == list
-                assert len(body[0]['films']) == expected_answer['len_films']
+            assert len(body) == expected_answer['length']
+            assert body[0]['full_name'] == expected_answer['full_name']
+            assert list(body[0].keys()) == ['uuid', 'full_name', 'films']
+            assert type(body[0]['films']) == list
+            assert len(body[0]['films']) == expected_answer['len_films']
 
     @pytest.mark.asyncio
     async def test_search_persons_pagination_negative(self,
                                                       session_client):
-        url = settings.service_url + f'{PREFIX}/search?query=Jack&page_number=4&page_size=5000'
+        url = settings.service_url + \
+              f'{PREFIX}/search?query=Jack&page_number=4&page_size=5000'
 
         async with session_client.get(url) as response:
             body = await response.json()

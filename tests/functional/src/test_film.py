@@ -90,7 +90,7 @@ class TestFilms:
         async with session_client.get(url) as response:
             body = await response.json()
             assert response.status == expected_answer['status']
-            assert body['detail'] == 'movies not found'
+            assert body['detail'] == expected_answer['detail']
 
     @pytest.mark.parametrize(
         'url, expected_answer',
@@ -184,18 +184,19 @@ class TestFilms:
             body = await response.json()
             assert response.status == expected_answer['status']
             imdb_rating_list = [i['imdb_rating'] for i in body]
-            assert sorted(imdb_rating_list, reverse=reverse) == imdb_rating_list
+            assert sorted(imdb_rating_list, reverse=reverse) == \
+                   imdb_rating_list
 
     @pytest.mark.parametrize(
-        'url, expected_answer, reverse',
+        'url, expected_answer',
         [
             (
                     f'{PREFIX}/?sort=doesntexist',
-                    {'status': 404}
+                    {'status': 404, 'detail': 'movies not found'}
             ),
             (
                     f'{PREFIX}/search?query=doesntexist&sort=imdb_rating',
-                    {'status': 404}
+                    {'status': 404, 'detail': 'movies not found'}
             )
         ]
     )
@@ -209,7 +210,7 @@ class TestFilms:
         async with session_client.get(url) as response:
             body = await response.json()
             assert response.status == expected_answer['status']
-            assert body['detail'] == 'movies not found'
+            assert body['detail'] == expected_answer['detail']
 
 
 @pytest.mark.usefixtures('redis_clear_data_before_after', 'es_write_data')
@@ -284,7 +285,8 @@ class TestFilmSearch:
     @pytest.mark.asyncio
     async def test_search_films_pagination_negative(self,
                                                     session_client):
-        url = settings.service_url + f'{PREFIX}/search?query=Star&page_number=4&page_size=5000'
+        url = settings.service_url + \
+              f'{PREFIX}/search?query=Star&page_number=4&page_size=5000'
         async with session_client.get(url) as response:
             body = await response.json()
             assert response.status == 422
@@ -456,7 +458,8 @@ class TestFilmsSortRedis:
             body = await response.json()
             assert response.status == expected_answer['status']
             imdb_rating_list = [i['imdb_rating'] for i in body]
-            assert sorted(imdb_rating_list, reverse=reverse) == imdb_rating_list
+            assert sorted(imdb_rating_list, reverse=reverse) == \
+                   imdb_rating_list
 
 
 class TestFilmIdRedis:
