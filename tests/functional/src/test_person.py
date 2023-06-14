@@ -1,6 +1,7 @@
 import logging
-
 import pytest
+
+from http import HTTPStatus
 from logging import config as logging_config
 
 from tests.functional.settings import settings
@@ -20,7 +21,7 @@ class TestPersonID:
                                     get_id):
         _id = await get_id(
             f'{PREFIX}/search?query=Jack&page_number=1&page_size=1')
-        expected_answer = {'status': 200,
+        expected_answer = {'status': HTTPStatus.OK,
                            'length': 3,
                            'full_name': 'Jack Jones'}
         url = settings.service_url + PREFIX + '/' + _id
@@ -39,7 +40,7 @@ class TestPersonID:
     async def test_get_person_id_not_exists(self,
                                             session_client):
         url = settings.service_url + PREFIX + '/' + 'BAD_ID'
-        expected_answer = {'status': 404}
+        expected_answer = {'status': HTTPStatus.NOT_FOUND}
         async with session_client.get(url) as response:
             body = await response.json()
             assert response.status == expected_answer['status']
@@ -51,7 +52,7 @@ class TestPersonID:
                                            get_id):
         _id = await get_id(
             f'{PREFIX}/search?query=Jack&page_number=1&page_size=1')
-        expected_answer = {'status': 200, 'length': 50}
+        expected_answer = {'status': HTTPStatus.OK, 'length': 50}
         url = settings.service_url + PREFIX + '/' + _id + '/film'
 
         async with session_client.get(url) as response:
@@ -68,17 +69,23 @@ class TestPersonSearch:
         [
             (
                     f'{PREFIX}/search?query=Jack',
-                    {'status': 200, 'length': 1, 'full_name': 'Jack Jones',
+                    {'status': HTTPStatus.OK,
+                     'length': 1,
+                     'full_name': 'Jack Jones',
                      'len_films': 50}
             ),
             (
                     f'{PREFIX}/search?query=Jack',
-                    {'status': 200, 'length': 1, 'full_name': 'Jack Jones',
+                    {'status': HTTPStatus.OK,
+                     'length': 1,
+                     'full_name': 'Jack Jones',
                      'len_films': 50}
             ),
             (
                     f'{PREFIX}/search?query=jack',
-                    {'status': 200, 'length': 1, 'full_name': 'Jack Jones',
+                    {'status': HTTPStatus.OK,
+                     'length': 1,
+                     'full_name': 'Jack Jones',
                      'len_films': 50}
             ),
         ]
@@ -107,7 +114,7 @@ class TestPersonSearch:
 
         async with session_client.get(url) as response:
             body = await response.json()
-            assert response.status == 422
+            assert response.status == HTTPStatus.UNPROCESSABLE_ENTITY
             assert body['detail'][0]['type'] == 'value_error.number.not_le'
             assert 'less than or equal to 500' in body['detail'][0]['msg']
 
@@ -116,15 +123,18 @@ class TestPersonSearch:
         [
             (
                     f'{PREFIX}/search?query=doesntexist',
-                    {'status': 404, 'detail': 'persons not found'}
+                    {'status': HTTPStatus.NOT_FOUND,
+                     'detail': 'persons not found'}
             ),
             (
                     f'{PREFIX}/search?query=Jack&page_number=4&page_size=4',
-                    {'status': 404, 'detail': 'persons not found'}
+                    {'status': HTTPStatus.NOT_FOUND,
+                     'detail': 'persons not found'}
             ),
             (
                     f'{PREFIX}/search?query=',
-                    {'status': 404, 'detail': 'Empty `query` attribute'}
+                    {'status': HTTPStatus.NOT_FOUND,
+                     'detail': 'Empty `query` attribute'}
             ),
         ]
     )
@@ -167,7 +177,7 @@ class TestPersonIdRedis:
         # Find data by id
         url = settings.service_url + PREFIX + '/' + _id
         async with session_client.get(url) as response:
-            assert response.status == 200
+            assert response.status == HTTPStatus.OK
 
     # This test DOESN'T add data to ES, but adds data to redis
     @pytest.mark.asyncio
@@ -175,7 +185,7 @@ class TestPersonIdRedis:
                                   redis_clear_data_after,
                                   session_client):
 
-        expected_answer = {'status': 200, 'length': 3,
+        expected_answer = {'status': HTTPStatus.OK, 'length': 3,
                            'full_name': 'Jack Jones'}
         try:
             url = settings.service_url + PREFIX + '/' + _id
@@ -195,7 +205,7 @@ class TestPersonIdRedis:
     async def test_get_films_from_redis(self,
                                         redis_clear_data_after,
                                         session_client):
-        expected_answer = {'status': 200, 'length': 50}
+        expected_answer = {'status': HTTPStatus.OK, 'length': 50}
         try:
             url = settings.service_url + PREFIX + '/' + _id + '/film'
         except NameError:

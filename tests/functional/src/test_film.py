@@ -1,6 +1,7 @@
 import logging
-
 import pytest
+
+from http import HTTPStatus
 from logging import config as logging_config
 
 from tests.functional.settings import settings
@@ -20,35 +21,35 @@ class TestFilms:
         [
             (
                     f'{PREFIX}',
-                    {'status': 200, 'length': 50, 'title': 'The Star'}
+                    {'status': HTTPStatus.OK, 'length': 50, 'title': 'The Star'}
             ),
             (
                     f'{PREFIX}/?genre=Action',
-                    {'status': 200, 'length': 50, 'title': 'The Star'}
+                    {'status': HTTPStatus.OK, 'length': 50, 'title': 'The Star'}
             ),
             (
                     f'{PREFIX}/?genre=Music Story',
-                    {'status': 200, 'length': 50, 'title': 'The Star'}
+                    {'status': HTTPStatus.OK, 'length': 50, 'title': 'The Star'}
             ),
             (
                     f'{PREFIX}/?genre=music',
-                    {'status': 200, 'length': 50, 'title': 'The Star'}
+                    {'status': HTTPStatus.OK, 'length': 50, 'title': 'The Star'}
             ),
             (
                     f'{PREFIX}/?page_size=5',
-                    {'status': 200, 'length': 5, 'title': 'The Star'}
+                    {'status': HTTPStatus.OK, 'length': 5, 'title': 'The Star'}
             ),
             (
                     f'{PREFIX}/?page_number=2',
-                    {'status': 200, 'length': 60 - 50, 'title': 'The Star'}
+                    {'status': HTTPStatus.OK, 'length': 60 - 50, 'title': 'The Star'}
             ),
             (
                     f'{PREFIX}/?page_number=4&page_size=5',
-                    {'status': 200, 'length': 5, 'title': 'The Star'}
+                    {'status': HTTPStatus.OK, 'length': 5, 'title': 'The Star'}
             ),
             (
                     f'{PREFIX}/?page_number=4&page_size=5&genre=Action',
-                    {'status': 200, 'length': 5, 'title': 'The Star'}
+                    {'status': HTTPStatus.OK, 'length': 5, 'title': 'The Star'}
             ),
         ]
     )
@@ -72,11 +73,11 @@ class TestFilms:
         [
             (
                     f'{PREFIX}/?genre=doesntexist',
-                    {'status': 404, 'detail': 'movies not found'}
+                    {'status': HTTPStatus.NOT_FOUND, 'detail': 'movies not found'}
             ),
             (
                     f'{PREFIX}/?page_number=4&page_size=5&genre=doesntexist',
-                    {'status': 404, 'detail': 'movies not found'}
+                    {'status': HTTPStatus.NOT_FOUND, 'detail': 'movies not found'}
             ),
         ]
     )
@@ -97,38 +98,38 @@ class TestFilms:
         [
             (
                     f'{PREFIX}/?page_size=-5',
-                    {'status': 422,
+                    {'status': HTTPStatus.UNPROCESSABLE_ENTITY,
                      'type0': 'value_error.number.not_ge',
                      'msg': 'greater than or equal to 1'}
             ),
             (
                     f'{PREFIX}/?page_size=500000000000000',
-                    {'status': 422,
+                    {'status': HTTPStatus.UNPROCESSABLE_ENTITY,
                      'type0': 'value_error.number.not_le',
                      'msg': 'less than or equal to 500'}
             ),
             (
                     f'{PREFIX}/?page_number=-5',
-                    {'status': 422,
+                    {'status': HTTPStatus.UNPROCESSABLE_ENTITY,
                      'type0': 'value_error.number.not_ge',
                      'msg': 'greater than or equal to 1'}
             ),
             (
                     f'{PREFIX}/?page_number=5000000000000&genre=Action',
-                    {'status': 422,
+                    {'status': HTTPStatus.UNPROCESSABLE_ENTITY,
                      'type0': 'value_error.number.not_le',
                      'msg': 'less than or equal to 10000'}
             ),
             (
                     f'{PREFIX}/?page_number=-4&page_size=5000000000',
-                    {'status': 422,
+                    {'status': HTTPStatus.UNPROCESSABLE_ENTITY,
                      'type0': 'value_error.number.not_ge',
                      'msg': 'greater than or equal to 1',
                      'type1': 'value_error.number.not_le'}
             ),
             (
                     f'{PREFIX}/?page_number=fff&page_size=pop',
-                    {'status': 422,
+                    {'status': HTTPStatus.UNPROCESSABLE_ENTITY,
                      'type0': 'type_error.integer',
                      'msg': 'value is not a valid integer',
                      'type1': 'type_error.integer'}
@@ -157,17 +158,17 @@ class TestFilms:
         [
             (
                     f'{PREFIX}/?sort=imdb_rating',
-                    {'status': 200},
+                    {'status': HTTPStatus.OK},
                     False
             ),
             (
                     f'{PREFIX}/?sort=-imdb_rating',
-                    {'status': 200},
+                    {'status': HTTPStatus.OK},
                     True
             ),
             (
                     f'{PREFIX}/search?query=Star&sort=-imdb_rating',
-                    {'status': 200},
+                    {'status': HTTPStatus.OK},
                     True
             )
         ]
@@ -192,11 +193,13 @@ class TestFilms:
         [
             (
                     f'{PREFIX}/?sort=doesntexist',
-                    {'status': 404, 'detail': 'movies not found'}
+                    {'status': HTTPStatus.NOT_FOUND,
+                     'detail': 'movies not found'}
             ),
             (
                     f'{PREFIX}/search?query=doesntexist&sort=imdb_rating',
-                    {'status': 404, 'detail': 'movies not found'}
+                    {'status': HTTPStatus.NOT_FOUND,
+                     'detail': 'movies not found'}
             )
         ]
     )
@@ -220,7 +223,7 @@ class TestFilmID:
                                   session_client,
                                   get_id):
         _id = await get_id(f'{PREFIX}/?page_size=1')
-        expected_answer = {'status': 200, 'length': 8, 'title': 'The Star'}
+        expected_answer = {'status': HTTPStatus.OK, 'length': 8, 'title': 'The Star'}
         url = settings.service_url + PREFIX + '/' + _id
 
         async with session_client.get(url) as response:
@@ -237,7 +240,7 @@ class TestFilmID:
     async def test_get_film_id_not_exists(self,
                                           session_client):
         url = settings.service_url + PREFIX + '/' + 'BAD_ID'
-        expected_answer = {'status': 404}
+        expected_answer = {'status': HTTPStatus.NOT_FOUND}
         async with session_client.get(url) as response:
             body = await response.json()
             assert response.status == expected_answer['status']
@@ -251,19 +254,19 @@ class TestFilmSearch:
         [
             (
                     f'{PREFIX}/search?query=Star',
-                    {'status': 200, 'length': 50, 'title': 'The Star'}
+                    {'status': HTTPStatus.OK, 'length': 50, 'title': 'The Star'}
             ),
             (
                     f'{PREFIX}/search?query=The Star',
-                    {'status': 200, 'length': 50, 'title': 'The Star'}
+                    {'status': HTTPStatus.OK, 'length': 50, 'title': 'The Star'}
             ),
             (
                     f'{PREFIX}/search?query=star',
-                    {'status': 200, 'length': 50, 'title': 'The Star'}
+                    {'status': HTTPStatus.OK, 'length': 50, 'title': 'The Star'}
             ),
             (
                     f'{PREFIX}/search?query=Star&page_number=4&page_size=5',
-                    {'status': 200, 'length': 5, 'title': 'The Star'}
+                    {'status': HTTPStatus.OK, 'length': 5, 'title': 'The Star'}
             ),
         ]
     )
@@ -289,7 +292,7 @@ class TestFilmSearch:
               f'{PREFIX}/search?query=Star&page_number=4&page_size=5000'
         async with session_client.get(url) as response:
             body = await response.json()
-            assert response.status == 422
+            assert response.status == HTTPStatus.UNPROCESSABLE_ENTITY
             assert body['detail'][0]['type'] == 'value_error.number.not_le'
             assert 'less than or equal to 500' in body['detail'][0]['msg']
 
@@ -298,11 +301,13 @@ class TestFilmSearch:
         [
             (
                     f'{PREFIX}/search?query=doesntexist',
-                    {'status': 404, 'detail': 'movies not found'}
+                    {'status': HTTPStatus.NOT_FOUND,
+                     'detail': 'movies not found'}
             ),
             (
                     f'{PREFIX}/search?query=',
-                    {'status': 404, 'detail': 'Empty `query` attribute'}
+                    {'status': HTTPStatus.NOT_FOUND,
+                     'detail': 'Empty `query` attribute'}
             ),
         ]
     )
@@ -335,27 +340,27 @@ class TestFilmsRedis:
         [
             (
                 f'{PREFIX}/?genre=Action',
-                {'status': 200, 'length': 50, 'title': 'The Star'}
+                {'status': HTTPStatus.OK, 'length': 50, 'title': 'The Star'}
             ),
             (
                 f'{PREFIX}/?page_number=4&page_size=5&genre=Action',
-                {'status': 200, 'length': 5, 'title': 'The Star'}
+                {'status': HTTPStatus.OK, 'length': 5, 'title': 'The Star'}
             ),
             (
                 f'{PREFIX}/search?query=Star',
-                {'status': 200, 'length': 50, 'title': 'The Star'}
+                {'status': HTTPStatus.OK, 'length': 50, 'title': 'The Star'}
             ),
             (
                 f'{PREFIX}/search?query=The Star',
-                {'status': 200, 'length': 50, 'title': 'The Star'}
+                {'status': HTTPStatus.OK, 'length': 50, 'title': 'The Star'}
             ),
             (
                 f'{PREFIX}/search?query=Star&page_number=4&page_size=5',
-                {'status': 200, 'length': 5, 'title': 'The Star'}
+                {'status': HTTPStatus.OK, 'length': 5, 'title': 'The Star'}
             ),
             (
                 f'{PREFIX}/search?query=Star&page_number=4&page_size=10',
-                {'status': 200, 'length': 10, 'title': 'The Star'}
+                {'status': HTTPStatus.OK, 'length': 10, 'title': 'The Star'}
             ),
         ]
 
@@ -374,7 +379,7 @@ class TestFilmsRedis:
         url = settings.service_url + url
 
         async with session_client.get(url) as response:
-            assert response.status == 200
+            assert response.status == HTTPStatus.OK
 
     # This test DOESN'T add data to ES, but adds data to redis
     @pytest.mark.parametrize(
@@ -413,12 +418,12 @@ class TestFilmsSortRedis:
         [
             (
                 f'{PREFIX}/search?query=Star&sort=imdb_rating',
-                {'status': 200, 'length': 50, 'title': 'The Star'},
+                {'status': HTTPStatus.OK, 'length': 50, 'title': 'The Star'},
                 False
             ),
             (
                 f'{PREFIX}/search?query=Star&sort=-imdb_rating',
-                {'status': 200, 'length': 50, 'title': 'The Star'},
+                {'status': HTTPStatus.OK, 'length': 50, 'title': 'The Star'},
                 True
             ),
         ]
@@ -439,7 +444,7 @@ class TestFilmsSortRedis:
         url = settings.service_url + url
 
         async with session_client.get(url) as response:
-            assert response.status == 200
+            assert response.status == HTTPStatus.OK
 
     @pytest.mark.parametrize(
         'url, expected_answer, reverse',
@@ -488,7 +493,7 @@ class TestFilmIdRedis:
         # Find data by id
         url = settings.service_url + PREFIX + '/' + _id
         async with session_client.get(url) as response:
-            assert response.status == 200
+            assert response.status == HTTPStatus.OK
 
     # This test DOESN'T add data to ES, but adds data to redis
     @pytest.mark.asyncio
@@ -496,7 +501,7 @@ class TestFilmIdRedis:
                                   redis_clear_data_after,
                                   session_client):
 
-        expected_answer = {'status': 200, 'length': 8, 'title': 'The Star'}
+        expected_answer = {'status': HTTPStatus.OK, 'length': 8, 'title': 'The Star'}
         try:
             url = settings.service_url + PREFIX + '/' + _id
         except NameError:
