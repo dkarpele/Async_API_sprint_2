@@ -4,7 +4,7 @@ from logging import config as logging_config
 from utils.logger import LOGGING
 from settings import settings
 
-from tests.functional.utils.backoff import backoff, BackoffError
+from .backoff import backoff, BackoffError
 
 # Применяем настройки логирования
 logging_config.dictConfig(LOGGING)
