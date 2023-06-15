@@ -4,13 +4,13 @@ from logging import config as logging_config
 from utils.logger import LOGGING
 from settings import settings
 
-from .backoff import backoff, BackoffError
+from utils.backoff import backoff, BackoffError
 
 # Применяем настройки логирования
 logging_config.dictConfig(LOGGING)
 
 
-@backoff(servise='ES')
+@backoff(service='ES')
 async def wait_es():
     es_client = Elasticsearch(
         hosts=f'http://{settings.elastic_host}:{settings.elastic_port}',
